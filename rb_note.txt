@@ -1,0 +1,115 @@
+/*
+ * Copyright (c) 2019 xieqing. https://github.com/xieqing
+ * May be freely redistributed, but copyright notice must be retained.
+ */
+
+a non-recursive implementation of red-black tree
+
+##################################################
+## DEFINITION
+##################################################
+
+A red-black tree is a binary search tree where each node has a color attribute, the value of which is either red or black. Essentially, it is just a convenient way to express a 2-3-4 binary search tree where the color indicates whether the node is part of a 3-node or a 4-node. 2-3-4 trees and red-black trees are equivalent data structures, red-black trees are simpler to implement, so tend to be used instead.
+
+In addition to the ordinary requirements imposed on binary search trees, we make the following additional requirements of any valid red-black tree.
+
+binary search property or order property:
+the key in each node must be greater than or equal to any key stored in the left sub-tree, and less than or equal to any key stored in the right sub-tree.
+
+red-black properties:
+1. Every node is either red or black.
+2. The root and leaves (NIL's) are black.
+3. Parent of each red node is black.
+4. Both children of each red node are black.
+5. Every path from a given node to any of its descendant NIL nodes contains the same number of black nodes.
+
+http://en.wikipedia.org/wiki/Red-black_tree
+https://en.wikipedia.org/wiki/2-3-4_tree
+https://www.cs.usfca.edu/~galles/visualization/RedBlack.html
+
+##################################################
+## WHY 2-3-4 TREE
+##################################################
+
+why 2-4 tree?
+    We could only keep binary search tree almostly balanced instead of completely balanced. (consider AVL tree as an example)
+
+    Binary search tree
+
+             1
+            / \
+           /   \
+          4     9
+         / \   / \
+        3   5 6  nil
+    
+    2-3-4 tree
+                        (1)
+                       /   \
+                      /     \
+           (3   4   5)      (6   9)
+           /  |   |  \      /  |  \
+        nil nil nil  nil nil  nil  nil
+
+    2-subtrees: (1)
+    3-subtrees: (6   9)
+    4-subtrees: (3   4   5)
+
+    We need at least 1-3 nodes (2-4 children) to keep tree completely balanced.  
+
+Why not 2-5 tree, 2-6 tree...?
+    2-4 tree will guarantee O(logn) using 2, 3 or 4 subtrees per node, while implementation could be trivial (red-black tree).
+    2-N (N>4) tree still guarantee O(logn), while implementation could be much complicated.
+
+top-down splits vs bottom-up split
+    Instead of doing splits top-down, we can perform them bottom-up starting at the insertion node, and only when needed.
+
+##################################################
+## INSERTION
+##################################################
+
+Insertion into a 2-3-4 tree
+split and overflow
+
+Insertion into a red-black tree
+Insert as in simple binary search tree (current is RED)
+  empty node becomes 2-children node (new root created)
+    paint root BLACK, and done
+  2-children node (current->parent is BLACK) becomes 3-children node
+    done
+  3-children node (current->parent is BLACK) becomes 4-children node
+    done
+  3-children node (current->parent is RED) becomes 4-children node
+	perform one or two adjustments (3-children node has two presentations), and done
+  4-children node (current->parent is RED) splits into 2-children node and 3-children node
+    split, paint grandparent RED, and send grandparent up the tree
+
+##################################################
+## DELETION
+##################################################
+
+Deletion from 2-3-4 tree 
+transfer
+fuse and underflow
+
+Deletion from red-black tree
+delete as in simple BST (the deleted item is RED/BLACK)
+  4-children node (target is RED) becomes 3-children node
+    done
+  3-children node (target is RED, child is BLACK) becomes 2-children node
+    done
+  3-children node (target is BLACK, child is RED) becomes 2-children node
+    paint child BLACK, and done
+
+  2-children node (target is BLACK, sibling is 4-children node) becomes 3-children node
+    transfer, and done
+  2-children node (target is BLACK, sibling is 3-children node) becomes 2-children node
+    transfer, and done
+
+  2-children node (target is BLACK, sibling is 2-children node, target->parent is RED) becomes 3-children node
+    fuse, paint target->parent BLACK, and done
+  2-children node (target is BLACK, sibling is 2-children node, target->parent is BLACK) becomes 3-children node
+    fuse, and borrow target->parent from parent
+
+  2-children root (target is BLACK) becomes empty node
+    done
