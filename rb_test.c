@@ -45,8 +45,14 @@ static int unit_test_permutation_insertion();
 static int unit_test_permutation_deletion();
 static int unit_test_random_insertion_deletion();
 
+static int unit_test_dup();
+#ifdef RB_MIN
+static int unit_test_min();
+#endif
+
 void all_tests()
 {
+
 	mu_test("unit_test_create", unit_test_create());
 
 	mu_test("unit_test_find", unit_test_find());
@@ -63,6 +69,12 @@ void all_tests()
 	mu_test("unit_test_permutation_deletion", unit_test_permutation_deletion());
 
 	mu_test("unit_test_random_insertion_deletion", unit_test_random_insertion_deletion());
+
+	mu_test("unit_test_dup", unit_test_dup());
+
+	#ifdef RB_MIN
+	mu_test("unit_test_min", unit_test_min());
+	#endif
 }
 
 int main(int argc, char **argv)
@@ -225,7 +237,7 @@ void permutation_delete(char *a)
 	}
 
 	for (i = 0; i < strlen(a); i++) {
-		if (tree_delete(rbt, a[i]) == 0 || tree_check(rbt) != 1) {
+		if (tree_delete(rbt, a[i]) != 1 || tree_check(rbt) != 1) {
 			fprintf(stdout, "delete %c failed\n", a[i]);
 			permutation_error++;
 			return;
@@ -260,7 +272,7 @@ rbtree *make_black_tree()
 			goto err;
 	}
 
-	n = strlen(b);
+	n = strlen(c);
 	for (i = 0; i < n; i++) {
 		if ((node = tree_find(rbt, c[i])) == NULL || node->color != BLACK)
 			goto err;
@@ -309,18 +321,10 @@ int unit_test_create()
 		rbt->root.parent != RB_NIL(rbt) || \
 		rbt->root.color != BLACK || \
 		rbt->root.data != NULL) {
-		fprintf(stdout, "init1 failed\n");
+		fprintf(stdout, "init failed\n");
 		rb_destroy(rbt);
 		return 0;
 	}
-
-	#ifdef RB_MIN
-	if (rbt->min != NULL) {
-		fprintf(stdout, "init2 failed\n");
-		rb_destroy(rbt);
-		return 0;
-	}
-	#endif
 
 	rb_destroy(rbt);
 	return 1;
@@ -702,6 +706,70 @@ int unit_test_random_insertion_deletion()
 	printf("\tstat: ninsert=%d, ndelete=%d\n", ninsert, ndelete);
 
 	rb_destroy(rbt);
+	return 1;
+
+err:
+	rb_destroy(rbt);
+err0:
+	return 0;
+}
+
+#ifdef RB_MIN
+int unit_test_min()
+{
+	rbtree *rbt;
+
+	if ((rbt = tree_create()) == NULL) {
+		fprintf(stdout, "create red-black tree failed\n");
+		goto err0;
+	}
+
+	if (RB_MINIMAL(rbt) != NULL || \
+		tree_insert(rbt, 'B') == NULL || RB_MINIMAL(rbt) != tree_find(rbt, 'B') || \
+		tree_insert(rbt, 'A') == NULL || RB_MINIMAL(rbt) != tree_find(rbt, 'A') || \
+		tree_insert(rbt, 'C') == NULL || RB_MINIMAL(rbt) != tree_find(rbt, 'A') || \
+		tree_delete(rbt, 'B') != 1 || RB_MINIMAL(rbt) != tree_find(rbt, 'A') || \
+		tree_delete(rbt, 'A') != 1 || RB_MINIMAL(rbt) != tree_find(rbt, 'C') || \
+		tree_delete(rbt, 'C') != 1 || RB_MINIMAL(rbt) != NULL) {
+		fprintf(stdout, "invalid min\n");
+		goto err;
+	}
+
+	rb_destroy(rbt);
+
+	return 1;
+
+err:
+	rb_destroy(rbt);
+err0:
+	return 0;
+}
+#endif
+
+int unit_test_dup()
+{
+	rbtree *rbt;
+	rbnode *n1, *n2;
+
+	if ((rbt = tree_create()) == NULL) {
+		fprintf(stdout, "create red-black tree failed\n");
+		goto err0;
+	}
+
+	if ((n1 = tree_insert(rbt, 'N')) == NULL || (n2 = tree_insert(rbt, 'N')) == NULL) {
+		fprintf(stdout, "insert failed\n");
+		goto err;
+	}
+
+	#ifdef RB_DUP
+	if (n1 == n2 || n1->right != n2) {
+	#else
+	if (n1 != n2) {
+	#endif
+		fprintf(stdout, "invalid dup\n");
+		goto err;
+	}
+
 	return 1;
 
 err:
