@@ -350,9 +350,7 @@ void *rb_delete(rbtree *rbt, rbnode *node, int keep)
 
 		#ifdef RB_MIN
 		/* if min == node, then min = successor = node (swapped), thus idle */
-
-		if (rbt->min == target)
-			rbt->min = node; /* swapped, thus min = node */
+		/* if min == target, then min == successor, which is not the minimal, thus impossible */
 		#endif
 	}
 
