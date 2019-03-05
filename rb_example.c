@@ -42,12 +42,14 @@ int main(int argc, char *argv[])
 		rb_delete(rbt, node, 0);
 	rb_print(rbt, print_char_func);
 
+	#ifdef RB_MIN
 	while ((node = RB_MINIMAL(rbt))) {
 		printf("\ndelete ");
 		print_char_func(node->data);
 		rb_delete(rbt, node, 0);
 		rb_print(rbt, print_char_func);
 	}
+	#endif
 
 	rb_destroy(rbt);
 	return 0;
