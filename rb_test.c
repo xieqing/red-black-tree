@@ -52,7 +52,6 @@ static int unit_test_min();
 
 void all_tests()
 {
-
 	mu_test("unit_test_create", unit_test_create());
 
 	mu_test("unit_test_find", unit_test_find());
@@ -769,6 +768,8 @@ int unit_test_dup()
 		fprintf(stdout, "invalid dup\n");
 		goto err;
 	}
+
+	rb_destroy(rbt);
 
 	return 1;
 

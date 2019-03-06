@@ -69,47 +69,52 @@ top-down splits vs bottom-up split
 ##################################################
 
 Insertion into a 2-3-4 tree
-split and overflow
+
+split, and insert grandparent node into parent cluster
 
 Insertion into a red-black tree
-Insert as in simple binary search tree (current is RED)
-  empty node becomes 2-children node (new root created)
-    paint root BLACK, and done
-  2-children node (current->parent is BLACK) becomes 3-children node
+
+insert as in simple binary search tree
+  0-children root cluster (parent node is BLACK) becomes 2-children root cluster
+    paint root node BLACK, and done
+  2-children cluster (parent node is BLACK) becomes 3-children cluster
     done
-  3-children node (current->parent is BLACK) becomes 4-children node
+  3-children cluster (parent node is BLACK) becomes 4-children cluster
     done
-  3-children node (current->parent is RED) becomes 4-children node
-	perform one or two adjustments (3-children node has two presentations), and done
-  4-children node (current->parent is RED) splits into 2-children node and 3-children node
-    split, paint grandparent RED, and send grandparent up the tree
+  3-children cluster (parent node is RED) becomes 4-children cluster
+    rotate, and done
+  4-children cluster (parent node is RED) splits into 2-children cluster and 3-children cluster
+    split, and insert grandparent node into parent cluster
 
 ##################################################
 ## DELETION
 ##################################################
 
 Deletion from 2-3-4 tree 
-transfer
-fuse and underflow
+
+transfer, and done
+fuse, and done
+fuse, and delete parent node from parent cluster
 
 Deletion from red-black tree
-delete as in simple BST (the deleted item is RED/BLACK)
-  4-children node (target is RED) becomes 3-children node
-    done
-  3-children node (target is RED, child is BLACK) becomes 2-children node
-    done
-  3-children node (target is BLACK, child is RED) becomes 2-children node
-    paint child BLACK, and done
 
-  2-children node (target is BLACK, sibling is 4-children node) becomes 3-children node
+delete as in simple binary search tree
+  4-children cluster (RED target node) becomes 3-children cluster
+    done
+  3-children cluster (RED target node) becomes 2-children cluster
+    done
+  3-children cluster (BLACK target node, RED child node) becomes 2-children cluster
+    paint child node BLACK, and done
+
+ 2-children root cluster (BLACK target node, BLACK child node) becomes 0-children root cluster
+    done
+
+  2-children cluster (BLACK target node, 4-children sibling cluster) becomes 3-children cluster
     transfer, and done
-  2-children node (target is BLACK, sibling is 3-children node) becomes 2-children node
+  2-children cluster (BLACK target node, 3-children sibling cluster) becomes 2-children cluster
     transfer, and done
 
-  2-children node (target is BLACK, sibling is 2-children node, target->parent is RED) becomes 3-children node
-    fuse, paint target->parent BLACK, and done
-  2-children node (target is BLACK, sibling is 2-children node, target->parent is BLACK) becomes 3-children node
-    fuse, and borrow target->parent from parent
-
-  2-children root (target is BLACK) becomes empty node
-    done
+  2-children cluster (BLACK target node, 2-children sibling cluster, 3/4-children parent cluster) becomes 3-children cluster
+    fuse, paint parent node BLACK, and done
+  2-children cluster (BLACK target node, 2-children sibling cluster, 2-children parent cluster) becomes 3-children cluster
+    fuse, and delete parent node from parent cluster

@@ -232,23 +232,30 @@ rbnode *rb_insert(rbtree *rbt, void *data)
 	
 	/*
 	 * insertion into a red-black tree:
-	 *   empty node becomes 2-children node (new root created)
-	 *     paint root BLACK, and done
-	 *   2-children node (current->parent is BLACK) becomes 3-children node
+	 *   0-children root cluster (parent node is BLACK) becomes 2-children root cluster (new root node)
+	 *     paint root node BLACK, and done
+	 *   2-children cluster (parent node is BLACK) becomes 3-children cluster
 	 *     done
-	 *   3-children node (current->parent is BLACK) becomes 4-children node
+	 *   3-children cluster (parent node is BLACK) becomes 4-children cluster
 	 *     done
-	 *   3-children node (current->parent is RED) becomes 4-children node
-	 *     perform an adjustment (3-children node has two presentations), and done
-	 *   4-children node (current->parent is RED) splits into 2-children node and 3-children node
-	 *     split, and send grandparent up the tree
+	 *   3-children cluster (parent node is RED) becomes 4-children cluster
+	 *     rotate, and done
+	 *   4-children cluster (parent node is RED) splits into 2-children cluster and 3-children cluster
+	 *     split, and insert grandparent node into parent cluster
 	 */
-	if (current->parent->color == RED)
+	if (current->parent->color == RED) {
+		/* insertion into 3-children cluster (parent node is RED) */
+		/* insertion into 4-children cluster (parent node is RED) */
 		insert_repair(rbt, current);
+	} else {
+		/* insertion into 0-children root cluster (parent node is BLACK) */
+		/* insertion into 2-children cluster (parent node is BLACK) */
+		/* insertion into 3-children cluster (parent node is BLACK) */
+	}
 
 	/*
 	 * the root is always BLACK
-	 * insertion into empty red-black tree or insertion into 4-children root requires this recoloring
+	 * insertion into 0-children root cluster or insertion into 4-children root cluster require this recoloring
 	 */
 	RB_FIRST(rbt)->color = BLACK;
 	
@@ -265,22 +272,22 @@ void insert_repair(rbtree *rbt, rbnode *current)
 	rbnode *uncle;
 
 	do {
-		/* rebalance only if current is RED and current->parent is RED */
+		/* current node is RED and parent node is RED */
 
 		if (current->parent == current->parent->parent->left) {
 			uncle = current->parent->parent->right;
 			if (uncle->color == RED) {
-				/* insertion into 4-children node */
+				/* insertion into 4-children cluster */
 
 				/* split */
 				current->parent->color = BLACK;
 				uncle->color = BLACK;
 
-				/* send grand parent up the tree */
+				/* send grandparent node up the tree */
 				current = current->parent->parent; /* goto loop or break */
 				current->color = RED;
 			} else {
-				/* insertion into 3-children node */
+				/* insertion into 3-children cluster */
 
 				/* equivalent BST */
 				if (current == current->parent->right) {
@@ -288,7 +295,7 @@ void insert_repair(rbtree *rbt, rbnode *current)
 					rotate_left(rbt, current);
 				}
 
-				/* 3-children node has two representations */
+				/* 3-children cluster has two representations */
 				current->parent->color = BLACK; /* thus goto break */
 				current->parent->parent->color = RED;
 				rotate_right(rbt, current->parent->parent);
@@ -296,17 +303,17 @@ void insert_repair(rbtree *rbt, rbnode *current)
 		} else {
 			uncle = current->parent->parent->left;
 			if (uncle->color == RED) {
-				/* insertion into 4-children node */
+				/* insertion into 4-children cluster */
 
 				/* split */
 				current->parent->color = BLACK;
 				uncle->color = BLACK;
 
-				/* send grand parent up the tree */
+				/* send grandparent node up the tree */
 				current = current->parent->parent; /* goto loop or break */
 				current->color = RED;
 			} else {
-				/* insertion into 3-children node */
+				/* insertion into 3-children cluster */
 
 				/* equivalent BST */
 				if (current == current->parent->left) {
@@ -314,7 +321,7 @@ void insert_repair(rbtree *rbt, rbnode *current)
 					rotate_right(rbt, current);
 				}
 
-				/* 3-children node has two representations */
+				/* 3-children cluster has two representations */
 				current->parent->color = BLACK; /* thus goto break */
 				current->parent->parent->color = RED;
 				rotate_left(rbt, current->parent->parent);
@@ -341,7 +348,7 @@ void *rb_delete(rbtree *rbt, rbnode *node, int keep)
 
 		#ifdef RB_MIN
 		if (rbt->min == target)
-			rbt->min = rb_successor(rbt, node); /* deleted, thus min = successor */
+			rbt->min = rb_successor(rbt, target); /* deleted, thus min = successor */
 		#endif
 	} else {
 		target = rb_successor(rbt, node); /* node->right must not be NIL, thus move down */
@@ -358,31 +365,39 @@ void *rb_delete(rbtree *rbt, rbnode *node, int keep)
 
 	/*
 	 * deletion from red-black tree
-	 *   4-children node (target is RED) becomes 3-children node
+	 *   4-children cluster (RED target node) becomes 3-children cluster
 	 *     done
-	 *   3-children node (target is RED, child is BLACK) becomes 2-children node
+	 *   3-children cluster (RED target node) becomes 2-children cluster
 	 *     done
-	 *   3-children node (target is BLACK, child is RED) becomes 2-children node
-	 *     paint child BLACK, and done
+	 *   3-children cluster (BLACK target node, RED child node) becomes 2-children cluster
+	 *     paint child node BLACK, and done
 	 *
-	 *   2-children node (target is BLACK, sibling is 4-children node) becomes 3-children node
+	 *	 2-children root cluster (BLACK target node, BLACK child node) becomes 0-children root cluster
+	 *     done
+	 *
+	 *   2-children cluster (BLACK target node, 4-children sibling cluster) becomes 3-children cluster
 	 *     transfer, and done
-	 *   2-children node (target is BLACK, sibling is 3-children node) becomes 2-children node
+	 *   2-children cluster (BLACK target node, 3-children sibling cluster) becomes 2-children cluster
 	 *     transfer, and done
 	 *
-	 *   2-children node (target is BLACK, sibling is 2-children node, target->parent is RED) becomes 3-children node
-	 *     fuse, paint target->parent BLACK, and done
-	 *   2-children node (target is BLACK, sibling is 2-children node, target->parent is BLACK) becomes 3-children node
-	 *     fuse, and borrow target->parent from parent
-	 *
-	 *	 2-children root (target is BLACK) becomes empty node
-	 *     done
+	 *   2-children cluster (BLACK target node, 2-children sibling cluster, 3/4-children parent cluster) becomes 3-children cluster
+	 *     fuse, paint parent node BLACK, and done
+	 *   2-children cluster (BLACK target node, 2-children sibling cluster, 2-children parent cluster) becomes 3-children cluster
+	 *     fuse, and delete parent node from parent cluster
 	 */
 	if (target->color == BLACK) {
-		if (child->color == RED) /* 3-children node (target is BLACK, child is RED) */
-			child->color = BLACK; /* recolor, and done */
-		else /* 2-children node */
+		if (child->color == RED) {
+			/* deletion from 3-children cluster (BLACK target node, RED child node) */
+			child->color = BLACK;
+		} else if (target == RB_FIRST(rbt)) {
+			/* deletion from 2-children root cluster (BLACK target node, BLACK child node) */
+		} else {
+			/* deletion from 2-children cluster (BLACK target node, ...) */
 			delete_repair(rbt, target);
+		}
+	} else {
+		/* deletion from 4-children cluster (RED target node) */
+		/* deletion from 3-children cluster (RED target node) */
 	}
 
 	if (child != RB_NIL(rbt))
@@ -410,36 +425,33 @@ void *rb_delete(rbtree *rbt, rbnode *node, int keep)
 void delete_repair(rbtree *rbt, rbnode *current)
 {
 	rbnode *sibling;
-	while (current != RB_FIRST(rbt)) {
-
-		/* current must be BLACK */
-
+	do {
 		if (current == current->parent->left) {
 			sibling = current->parent->right;
 
 			if (sibling->color == RED) {
-				/* parent is 3-children node, perform an adjustment (3-children node has two representations) */
+				/* perform an adjustment (3-children parent cluster has two representations) */
 				sibling->color = BLACK;
 				current->parent->color = RED;
 				rotate_left(rbt, current->parent);
 				sibling = current->parent->right;
 			}
 
-			/* sibling must be BLACK now */
+			/* sibling node must be BLACK now */
 
 			if (sibling->right->color == BLACK && sibling->left->color == BLACK) {
-				/* sibling is 2-children node, fuse by recoloring */
+				/* 2-children sibling cluster, fuse by recoloring */
 				sibling->color = RED;
-				if (current->parent->color == RED) { /* parent is 3-children node or 4-children node */
+				if (current->parent->color == RED) { /* 3/4-children parent cluster */
 					current->parent->color = BLACK;
 					break; /* goto break */
-				} else { /* parent is 2-children node or 3-children node */
+				} else { /* 2-children parent cluster */
 					current = current->parent; /* goto loop */
 				}
 			} else {
-				/* sibling is 3-children node or 4-children node */
+				/* 3/4-children sibling cluster */
 				
-				/* if sibling is 3-children node, perform an adjustment (3-children node has two representations) */
+				/* perform an adjustment (3-children sibling cluster has two representations) */
 				if (sibling->right->color == BLACK) {
 					sibling->left->color = BLACK;
 					sibling->color = RED;
@@ -458,28 +470,28 @@ void delete_repair(rbtree *rbt, rbnode *current)
 			sibling = current->parent->left;
 
 			if (sibling->color == RED) {
-				/* parent is 3-nodes, perform an adjustment (3-nodes has two representations) */
+				/* perform an adjustment (3-children parent cluster has two representations) */
 				sibling->color = BLACK;
 				current->parent->color = RED;
 				rotate_right(rbt, current->parent);
 				sibling = current->parent->left;
 			}
 
-			/* sibling must be BLACK now */
+			/* sibling node must be BLACK now */
 
 			if (sibling->right->color == BLACK && sibling->left->color == BLACK) {
-				/* sibling is 2-children node, fuse by recoloring */
+				/* 2-children sibling cluster, fuse by recoloring */
 				sibling->color = RED;
-				if (current->parent->color == RED) { /* parent is 3-children node or 4-children node */
+				if (current->parent->color == RED) { /* 3/4-children parent cluster */
 					current->parent->color = BLACK;
 					break; /* goto break */
-				} else { /* parent is 2-children node or 3-children node */
+				} else { /* 2-children parent cluster */
 					current = current->parent; /* goto loop */
 				}
 			} else {
-				/* sibling is 3-children node or 4-children node */
+				/* 3/4-children sibling cluster */
 
-				/* if sibling is 3-children node, perform an adjustment (3-children node has two representations) */
+				/* perform an adjustment (3-children sibling cluster has two representations) */
 				if (sibling->left->color == BLACK) {
 					sibling->right->color = BLACK;
 					sibling->color = RED;
@@ -495,7 +507,7 @@ void delete_repair(rbtree *rbt, rbnode *current)
 				break; /* goto break */
 			}
 		}
-	}
+	} while (current != RB_FIRST(rbt));
 }
 
 /*
@@ -598,5 +610,3 @@ void destroy(rbtree *rbt, rbnode *n)
         free(n);
     }
 }
-
-
