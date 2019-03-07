@@ -53,8 +53,8 @@ rbtree *rb_create(int (*compare)(const void *, const void *), void (*destroy)(vo
  */
 void rb_destroy(rbtree *rbt)
 {
-    destroy(rbt, RB_FIRST(rbt));
-    free(rbt);
+	destroy(rbt, RB_FIRST(rbt));
+	free(rbt);
 }
 
 /*
@@ -93,7 +93,7 @@ rbnode *rb_successor(rbtree *rbt, rbnode *node)
 		for ( ; p->left != RB_NIL(rbt); p = p->left) ;
 	} else {
 		/* move up until we find it or hit the root */
-        for (p = node->parent; node == p->right; node = p, p = p->parent) ;
+		for (p = node->parent; node == p->right; node = p, p = p->parent) ;
 
 		if (p == RB_ROOT(rbt))
 			p = NULL; /* not found */
@@ -357,7 +357,7 @@ void *rb_delete(rbtree *rbt, rbnode *node, int keep)
 
 		#ifdef RB_MIN
 		/* if min == node, then min = successor = node (swapped), thus idle */
-		/* if min == target, then min == successor, which is not the minimal, thus impossible */
+		/* if min == target, then min = successor, which is not the minimal, thus impossible */
 		#endif
 	}
 
@@ -578,7 +578,7 @@ int check_black_height(rbtree *rbt, rbnode *n)
 void rb_print(rbtree *rbt, void (*print_func)(void *))
 {
 	printf("\n--\n");
-    print(rbt, RB_FIRST(rbt), print_func, 0, "T");
+	print(rbt, RB_FIRST(rbt), print_func, 0, "T");
 	printf("\ncheck_black_height = %d\n", rb_check_black_height(rbt));
 }
 
@@ -587,15 +587,15 @@ void rb_print(rbtree *rbt, void (*print_func)(void *))
  */
 void print(rbtree *rbt, rbnode *n, void (*print_func)(void *), int depth, char *label)
 {
-    if (n != RB_NIL(rbt)) {
-        print(rbt, n->right, print_func, depth + 1, "R");
+	if (n != RB_NIL(rbt)) {
+		print(rbt, n->right, print_func, depth + 1, "R");
 		printf("%*s", 8 * depth, "");
 		if (label)
 			printf("%s: ", label);
-        print_func(n->data);
-        printf(" (%s)\n", n->color == RED ? "r" : "b");
-        print(rbt, n->left, print_func, depth + 1, "L");
-    }
+		print_func(n->data);
+		printf(" (%s)\n", n->color == RED ? "r" : "b");
+		print(rbt, n->left, print_func, depth + 1, "L");
+	}
 }
 
 /*
@@ -603,10 +603,10 @@ void print(rbtree *rbt, rbnode *n, void (*print_func)(void *), int depth, char *
  */
 void destroy(rbtree *rbt, rbnode *n)
 {
-    if (n != RB_NIL(rbt)) {
-        destroy(rbt, n->left);
-        destroy(rbt, n->right);
-        rbt->destroy(n->data);
-        free(n);
-    }
+	if (n != RB_NIL(rbt)) {
+		destroy(rbt, n->left);
+		destroy(rbt, n->right);
+		rbt->destroy(n->data);
+		free(n);
+	}
 }
