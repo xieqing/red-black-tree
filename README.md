@@ -4,10 +4,14 @@
 There are several choices when implementing red-black trees:
 - store parent reference or not
 - recursive or non-recursive (iterative)
+- do top-down splits or bottom-up splits (only when needed)
+- do top-down fusion or top-bottom fusion (only when needed)
 
 This implementation's choice:
 - store parent reference
 - non-recursive (iterative)
+- do bottom-up splits (only when needed)
+- do top-bottom fusion (only when needed)
 
 Files
 * rb.h - red-black tree header
@@ -66,10 +70,6 @@ We could only keep binary search tree almostly balanced instead of completely ba
 Why not 2-5 tree, 2-6 tree...?
 
 2-4 tree will guarantee O(log n) using 2, 3 or 4 subtrees per node, while implementation could be trivial (red-black tree). 2-N (N>4) tree still guarantee O(logn), while implementation could be much complicated.
-
-top-down splits vs bottom-up split
-
-Instead of doing splits top-down, we can perform them bottom-up starting at the insertion node, and only when needed.
 
 ## INSERTION
 
