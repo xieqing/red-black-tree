@@ -166,7 +166,6 @@ int tree_delete(rbtree *rbt, int key)
 	return 1;
 }
 
-
 void swap(char *x, char *y)
 {
 	char temp;
